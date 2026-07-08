@@ -1,0 +1,146 @@
+/* Custom Stylesheet for Django Billing App */
+
+/* Design Tokens */
+:root {
+    --bg-dark: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --border-color: #334155;
+    --focus-ring: #60a5fa;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Custom Form Styles */
+input, select, textarea {
+    background-color: #0f172a !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    outline: none;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--focus-ring) !important;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2) !important;
+}
+
+/* Table styling */
+.sticky-header th {
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-card);
+    z-index: 10;
+}
+
+tr.selected-row {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    border-left: 3px solid var(--accent);
+}
+
+/* Print CSS */
+@media print {
+    body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'Inter', Arial, sans-serif !important;
+        font-size: 10px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Hide non-printable elements */
+    .no-print, 
+    nav, 
+    aside, 
+    button, 
+    input, 
+    .btn, 
+    header, 
+    footer:not(.print-footer), 
+    .search-box, 
+    .settings-bar,
+    .breadcrumbs {
+        display: none !important;
+    }
+
+    /* Print container sizing */
+    .print-container {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* Table print optimization */
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin-top: 10px !important;
+        margin-bottom: 10px !important;
+        font-size: 10px !important;
+    }
+
+    th, td {
+        border-bottom: 1px solid #dddddd !important;
+        padding: 4px 2px !important;
+        text-align: left !important;
+        color: #000000 !important;
+        background-color: transparent !important;
+    }
+
+    th {
+        font-weight: bold !important;
+        border-bottom: 2px solid #000000 !important;
+    }
+
+    .text-right {
+        text-align: right !important;
+    }
+
+    /* A5 Portrait specifications */
+    @page {
+        size: A5 portrait;
+        margin: 5mm;
+    }
+
+    /* Avoid page-breaks inside a row */
+    tr {
+        page-break-inside: avoid !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+}

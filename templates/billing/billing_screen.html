@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}⚡ Billing Screen - FastBill{% endblock %}
+
+{% block content %}
+<div class="flex-grow flex flex-col space-y-4">
+    
+    <!-- CSRF Token for JS ajax requests -->
+    {% csrf_token %}
+
+    <!-- Top Card: Bill Header & Customer Details -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 shadow-lg">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            
+            <!-- Bill Details -->
+            <div class="space-y-1">
+                <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Bill Details</div>
+                <div class="flex items-center space-x-2 text-sm">
+                    <span class="text-slate-400">No:</span>
+                    <span id="bill-number-display" class="font-mono font-bold text-blue-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-base">{{ next_bill_number }}</span>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-400">Date:</span>
+                    <span class="font-mono text-slate-200 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{{ today_date }}</span>
+                </div>
+            </div>
+
+            <!-- Customer Name Search -->
+            <div class="relative space-y-1">
+                <label for="customer-search" class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Customer Name</label>
+                <input type="text" id="customer-search" placeholder="Walk-in Customer" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-1.5 rounded-lg text-sm focus:border-blue-500">
+                
+                <!-- Customer Suggestions Dropdown -->
+                <div id="customer-suggestions" class="absolute left-0 right-0 mt-1 bg-slate-900 border border-bordercolor rounded-lg shadow-2xl z-50 max-h-60 overflow-y-auto hidden"></div>
+            </div>
+
+            <!-- Customer Phone -->
+            <div class="space-y-1">
+                <label for="customer-phone" class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Phone Number</label>
+                <input type="text" id="customer-phone" placeholder="No phone" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-1.5 rounded-lg text-sm focus:border-blue-500">
+            </div>
+
+            <!-- Outstanding Status -->
+            <div class="flex items-center justify-end pr-4">
+                <div class="text-right">
+                    <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Old Balance</div>
+                    <div class="text-lg font-mono font-bold text-amber-500">₹<span id="old-balance">0.00</span></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Middle Card: Product Entry Row -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 shadow-lg">
+        <div class="grid grid-cols-12 gap-3 items-end">
+            
+            <!-- Product Search Input (Wide) -->
+            <div class="col-span-12 md:col-span-6 relative">
+                <label for="product-search" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Search Product / Enter Code</label>
+                <input type="text" id="product-search" autocomplete="off" placeholder="Type product code (e.g. 30) or name..." class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-medium">
+                
+                <!-- Product Suggestions Dropdown -->
+                <div id="product-suggestions" class="absolute left-0 right-0 mt-1 bg-slate-900 border border-bordercolor rounded-lg shadow-2xl z-50 max-h-60 overflow-y-auto hidden"></div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="col-span-6 md:col-span-2">
+                <label for="product-qty" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Quantity</label>
+                <input type="number" step="any" id="product-qty" value="1" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm text-right font-mono focus:border-blue-500">
+            </div>
+
+            <!-- Rate -->
+            <div class="col-span-6 md:col-span-2">
+                <label for="product-rate" class="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Rate (₹)</label>
+                <input type="number" step="any" id="product-rate" value="0.00" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm text-right font-mono focus:border-blue-500">
+            </div>
+
+            <!-- Add Row Indicator / Key Code Help -->
+            <div class="col-span-12 md:col-span-2">
+                <button type="button" onclick="addProductToBill()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 shadow-md flex items-center justify-center space-x-1">
+                    <span>Add Item</span>
+                    <span class="text-[10px] bg-blue-800 px-1 rounded font-mono">Enter</span>
+                </button>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Bottom Section: Split Columns (Bill Table Left, Summary Right) -->
+    <div class="flex-grow grid grid-cols-12 gap-4">
+        
+        <!-- Left: Bill Table -->
+        <div class="col-span-12 lg:col-span-8 bg-cardbg border border-bordercolor rounded-xl flex flex-col shadow-lg overflow-hidden min-h-[300px]">
+            <div class="p-3 bg-slate-800 border-b border-bordercolor flex justify-between items-center">
+                <span class="text-sm font-bold tracking-wide text-slate-300">Bill Items</span>
+                <span class="text-xs text-slate-400 font-mono">Table Mode: Navigate with <kbd class="bg-slate-900 px-1 py-0.5 rounded text-white border border-slate-700">↑/↓</kbd> | Edit: <kbd class="bg-slate-900 px-1 py-0.5 rounded text-white border border-slate-700">F2</kbd> | Del: <kbd class="bg-slate-900 px-1 py-0.5 rounded text-white border border-slate-700">Delete</kbd></span>
+            </div>
+            
+            <div id="table-wrapper" class="flex-grow overflow-y-auto max-h-[400px]">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 border-b border-bordercolor text-xs text-slate-400 uppercase tracking-wider sticky-header">
+                            <th class="p-3 text-center w-12">Sr</th>
+                            <th class="p-3 w-7/12">Product Name</th>
+                            <th class="p-3 text-right w-2/12">Qty</th>
+                            <th class="p-3 text-right w-2/12">Rate</th>
+                            <th class="p-3 text-right w-2/12">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bill-table-body">
+                        <!-- Added dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Next Line Indicator -->
+            <div class="p-3 bg-slate-900 border-t border-bordercolor flex justify-between items-center text-xs text-slate-500 font-mono">
+                <div>Next Item Sr No: <span id="sr-no-next" class="text-blue-400 font-bold">1</span></div>
+                <div>Sticky Headers Active</div>
+            </div>
+        </div>
+
+        <!-- Right: Summary Panel & Actions -->
+        <div class="col-span-12 lg:col-span-4 flex flex-col space-y-4">
+            
+            <!-- Summary Details -->
+            <div class="bg-cardbg border border-bordercolor rounded-xl p-4 shadow-lg flex-grow flex flex-col justify-between space-y-4">
+                
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 border-b border-bordercolor pb-1.5 mb-2">Bill Summary</h3>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-400 text-sm">Gross Total:</span>
+                        <span class="font-mono text-base font-medium">₹<span id="gross-total">0.00</span></span>
+                    </div>
+
+                    <!-- Discount (Flat amount input) -->
+                    <div class="flex justify-between items-center">
+                        <label for="discount" class="text-slate-400 text-sm">Discount (₹):</label>
+                        <input type="number" step="any" id="discount" value="0.00" class="w-32 bg-slate-950 border border-bordercolor text-right px-2.5 py-1 rounded-lg text-sm font-mono focus:border-blue-500">
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                        <span class="text-slate-300 text-sm font-semibold">Net Total:</span>
+                        <span class="font-mono text-lg font-bold text-emerald-400">₹<span id="net-total">0.00</span></span>
+                    </div>
+
+                    <!-- Amount Paid -->
+                    <div class="flex justify-between items-center">
+                        <label for="amount-paid" class="text-slate-400 text-sm">Amount Paid (₹):</label>
+                        <input type="number" step="any" id="amount-paid" value="0.00" class="w-32 bg-slate-950 border border-bordercolor text-right px-2.5 py-1 rounded-lg text-sm font-mono focus:border-blue-500">
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-slate-800 pt-3">
+                        <span class="text-slate-400 text-sm">Pending Amount:</span>
+                        <span class="font-mono text-base text-red-400 font-semibold">₹<span id="pending-amount">0.00</span></span>
+                    </div>
+
+                    <div class="flex justify-between items-center border-t border-slate-800 pt-3 text-xs text-slate-400">
+                        <span>Final Customer Balance:</span>
+                        <span class="font-mono font-medium">₹<span id="final-balance">0.00</span></span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="space-y-2 pt-4">
+                    
+                    <button type="button" onclick="saveBill(true)" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition duration-150 shadow-md flex items-center justify-center space-x-2">
+                        <span>Print Bill</span>
+                        <span class="text-[10px] bg-emerald-800 px-1.5 py-0.5 rounded font-mono text-emerald-200">Ctrl+P</span>
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="saveBill(false)" class="bg-slate-700 hover:bg-slate-650 text-white font-bold py-2 px-3 rounded-lg text-sm transition duration-150 shadow flex items-center justify-center space-x-1">
+                            <span>Save</span>
+                            <span class="text-[9px] bg-slate-800 px-1 py-0.5 rounded font-mono text-slate-300">Ctrl+S</span>
+                        </button>
+                        
+                        <button type="button" onclick="saveBill(false, true)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-lg text-sm transition duration-150 shadow flex items-center justify-center space-x-1">
+                            <span>Save & New</span>
+                            <span class="text-[9px] bg-blue-800 px-1 py-0.5 rounded font-mono text-blue-200">Ctrl+Alt+N</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.duplicatedItems = {{ duplicate_items_json|safe }};
+    window.duplicatedCustomer = {{ duplicate_cust_json|safe }};
+</script>
+<script src="{% static 'js/billing.js' %}"></script>
+{% endblock %}

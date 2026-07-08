@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}⚡ Product Master - FastBill{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white">Product Master</h1>
+            <p class="text-sm text-slate-400">Manage products, pricing, categories, and inventory configurations.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow-md">
+                + Add Product
+            </button>
+            <a href="{% url 'export_products' %}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                Export CSV
+            </a>
+            <button onclick="openModal('import')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                Import CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats summary for products -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Products</div>
+            <div class="text-2xl font-bold text-blue-400 mt-1">{{ total_count }}</div>
+        </div>
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Active Catalog Items</div>
+            <div class="text-2xl font-bold text-emerald-400 mt-1">{{ active_count }}</div>
+        </div>
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Inactive Products</div>
+            <div class="text-2xl font-bold text-red-400 mt-1">{{ inactive_count }}</div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 shadow-lg">
+        <form method="get" class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-96">
+                <input type="text" name="q" value="{{ q }}" placeholder="Search by name, code or barcode..." class="w-full bg-slate-950 border border-bordercolor text-white pl-3 pr-10 py-2 rounded-lg text-sm focus:border-blue-500">
+                <button type="submit" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-3 w-full md:w-auto">
+                <select name="sort" onchange="this.form.submit()" class="bg-slate-950 border border-bordercolor text-slate-300 py-1.5 px-3 rounded-lg text-sm focus:border-blue-500 w-full md:w-auto">
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Sort by Name (A-Z)</option>
+                    <option value="-name" {% if sort == '-name' %}selected{% endif %}>Sort by Name (Z-A)</option>
+                    <option value="code" {% if sort == 'code' %}selected{% endif %}>Sort by Code</option>
+                    <option value="rate" {% if sort == 'rate' %}selected{% endif %}>Rate: Low to High</option>
+                    <option value="-rate" {% if sort == '-rate' %}selected{% endif %}>Rate: High to Low</option>
+                </select>
+                {% if q or sort %}
+                    <a href="{% url 'product_list' %}" class="text-xs text-slate-400 hover:text-white underline">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Product Grid Table -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-lg">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-900 border-b border-bordercolor text-xs text-slate-400 uppercase tracking-wider">
+                    <th class="p-3">Product Code</th>
+                    <th class="p-3">Name</th>
+                    <th class="p-3 text-right">Default Rate</th>
+                    <th class="p-3">Category</th>
+                    <th class="p-3">Unit</th>
+                    <th class="p-3">Barcode</th>
+                    <th class="p-3">GST %</th>
+                    <th class="p-3 text-center">Status</th>
+                    <th class="p-3 text-center w-24">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                    <tr class="border-b border-gray-800 text-sm hover:bg-slate-800 transition">
+                        <td class="p-3 font-mono font-semibold text-blue-400">{{ product.code }}</td>
+                        <td class="p-3 font-medium">{{ product.name }}</td>
+                        <td class="p-3 text-right font-mono">₹{{ product.rate|floatformat:2 }}</td>
+                        <td class="p-3 text-slate-400">{{ product.category|default:"-" }}</td>
+                        <td class="p-3 text-slate-400">{{ product.unit }}</td>
+                        <td class="p-3 font-mono text-xs text-slate-500">{{ product.barcode|default:"-" }}</td>
+                        <td class="p-3 text-right text-slate-400">{{ product.gst_percentage }}%</td>
+                        <td class="p-3 text-center">
+                            {% if product.is_active %}
+                                <span class="bg-emerald-950 text-emerald-400 border border-emerald-800/60 px-2 py-0.5 rounded text-xs font-semibold">Active</span>
+                            {% else %}
+                                <span class="bg-red-950 text-red-400 border border-red-800/60 px-2 py-0.5 rounded text-xs font-semibold">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-center flex justify-center space-x-2">
+                            <button onclick="editProduct({{ product.id }}, '{{ product.code }}', '{{ product.name|escapejs }}', '{{ product.rate }}', '{{ product.category|escapejs }}', '{{ product.unit|escapejs }}', '{{ product.barcode|escapejs }}', '{{ product.gst_percentage }}', {{ product.is_active|yesno:'true,false' }})" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
+                                Edit
+                            </button>
+                            <span class="text-slate-700">|</span>
+                            <a href="{% url 'delete_product' product.id %}" onclick="return confirm('Are you sure you want to delete this product?');" class="text-red-400 hover:text-red-300 font-semibold text-xs">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-slate-400">No products found. Add your first product or import from CSV!</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+        <div class="flex justify-between items-center bg-slate-900/60 p-4 border border-bordercolor rounded-xl">
+            <span class="text-xs text-slate-400">Showing page {{ products.number }} of {{ products.paginator.num_pages }}</span>
+            <div class="flex space-x-1">
+                {% if products.has_previous %}
+                    <a href="?page={{ products.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs transition">Previous</a>
+                {% endif %}
+                {% if products.has_next %}
+                    <a href="?page={{ products.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs transition">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Modal dialogues (Add/Edit / Import) -->
+
+<!-- Add / Edit Modal -->
+<div id="product-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-cardbg border border-bordercolor rounded-xl w-full max-w-lg overflow-hidden shadow-2xl p-6 relative">
+        <h3 id="modal-title" class="text-lg font-bold text-white mb-4">Add Product</h3>
+        
+        <form id="product-form" method="post" action="{% url 'save_product' %}" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="id" id="prod-id">
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Product Code *</label>
+                    <input type="text" name="code" id="prod-code" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Product Name *</label>
+                    <input type="text" name="name" id="prod-name" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Default Rate (₹) *</label>
+                    <input type="number" step="any" name="rate" id="prod-rate" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm text-right font-mono focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Category</label>
+                    <input type="text" name="category" id="prod-category" placeholder="E.g. Groceries" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Unit</label>
+                    <input type="text" name="unit" id="prod-unit" value="Pcs" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Barcode</label>
+                    <input type="text" name="barcode" id="prod-barcode" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm font-mono focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">GST %</label>
+                    <input type="number" step="any" name="gst_percentage" id="prod-gst" value="0.00" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm text-right font-mono focus:border-blue-500">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 pt-2">
+                <input type="checkbox" name="is_active" id="prod-active" checked value="true" class="rounded bg-slate-950 border-bordercolor text-blue-600 focus:ring-0">
+                <label for="prod-active" class="text-sm font-semibold text-slate-300">Product is active and available for billing</label>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-bordercolor">
+                <button type="button" onclick="closeModal('product')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm">Cancel</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm shadow">Save Product</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div id="import-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-cardbg border border-bordercolor rounded-xl w-full max-w-md overflow-hidden shadow-2xl p-6 relative">
+        <h3 class="text-lg font-bold text-white mb-2">Import Products via CSV</h3>
+        <p class="text-xs text-slate-400 mb-4">Upload a CSV file containing columns: <code class="bg-slate-950 px-1 py-0.5 rounded text-blue-400 font-mono">code, name, rate, category, unit, barcode, gst_percentage</code></p>
+        
+        <form method="post" action="{% url 'import_products' %}" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <div class="border border-dashed border-bordercolor hover:border-slate-400 p-6 rounded-lg text-center cursor-pointer transition relative">
+                <input type="file" name="csv_file" required class="absolute inset-0 opacity-0 cursor-pointer">
+                <span class="text-xs text-slate-400 block mb-1">Click to browse or drop CSV file here</span>
+                <span class="text-xs text-blue-400 font-semibold">CSV files only</span>
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4 border-t border-bordercolor">
+                <button type="button" onclick="closeModal('import')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-sm">Cancel</button>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-sm shadow">Upload & Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(type) {
+        if (type === 'add') {
+            document.getElementById('modal-title').textContent = 'Add Product';
+            document.getElementById('product-form').reset();
+            document.getElementById('prod-id').value = '';
+            document.getElementById('product-modal').classList.remove('hidden');
+        } else if (type === 'import') {
+            document.getElementById('import-modal').classList.remove('hidden');
+        }
+    }
+
+    function closeModal(type) {
+        if (type === 'product') {
+            document.getElementById('product-modal').classList.add('hidden');
+        } else if (type === 'import') {
+            document.getElementById('import-modal').classList.add('hidden');
+        }
+    }
+
+    function editProduct(id, code, name, rate, category, unit, barcode, gst, isActive) {
+        document.getElementById('modal-title').textContent = 'Edit Product';
+        document.getElementById('prod-id').value = id;
+        document.getElementById('prod-code').value = code;
+        document.getElementById('prod-name').value = name;
+        document.getElementById('prod-rate').value = rate;
+        document.getElementById('prod-category').value = category;
+        document.getElementById('prod-unit').value = unit;
+        document.getElementById('prod-barcode').value = barcode;
+        document.getElementById('prod-gst').value = gst;
+        document.getElementById('prod-active').checked = isActive;
+        document.getElementById('product-modal').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

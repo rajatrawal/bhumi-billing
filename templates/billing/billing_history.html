@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}⚡ Billing History - FastBill{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-white">Billing History</h1>
+            <p class="text-sm text-slate-400">Search, filter, reprint, duplicate, or inspect past transactions.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'export_history' %}?{{ request.GET.urlencode }}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-750 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                Export History CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl p-4 shadow-lg">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <!-- Search Text -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Search</label>
+                <input type="text" name="q" value="{{ q }}" placeholder="Bill # or Customer..." class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-1.5 rounded-lg text-sm focus:border-blue-500">
+            </div>
+
+            <!-- Start Date -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-1.5 rounded-lg text-sm focus:border-blue-500 font-mono">
+            </div>
+
+            <!-- End Date -->
+            <div class="space-y-1">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">End Date</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-1.5 rounded-lg text-sm focus:border-blue-500 font-mono">
+            </div>
+
+            <!-- Submit Button & Clear -->
+            <div class="flex items-center space-x-2">
+                <button type="submit" class="flex-grow bg-blue-600 hover:bg-blue-500 text-white font-semibold py-1.5 px-4 rounded-lg text-sm transition shadow">
+                    Apply Filters
+                </button>
+                {% if q or start_date or end_date %}
+                    <a href="{% url 'billing_history' %}" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white border border-slate-750 py-1.5 px-3 rounded-lg text-sm transition">
+                        Clear
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Bills List Table -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-lg">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-900 border-b border-bordercolor text-xs text-slate-400 uppercase tracking-wider">
+                    <th class="p-3">Bill Number</th>
+                    <th class="p-3">Date</th>
+                    <th class="p-3">Customer</th>
+                    <th class="p-3 text-right">Net Total</th>
+                    <th class="p-3 text-right">Amount Paid</th>
+                    <th class="p-3 text-right">Pending</th>
+                    <th class="p-3 text-right">Final Balance</th>
+                    <th class="p-3 text-center w-52">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                    <tr class="border-b border-gray-800 text-sm hover:bg-slate-800 transition">
+                        <td class="p-3 font-mono font-semibold text-blue-400">{{ bill.bill_number }}</td>
+                        <td class="p-3 font-mono text-slate-300">{{ bill.date|date:"d-m-Y" }}</td>
+                        <td class="p-3">
+                            {% if bill.customer %}
+                                <div class="font-medium text-slate-200">{{ bill.customer.name|default:"Walk-in" }}</div>
+                                <div class="text-xs text-slate-500 font-mono">{{ bill.customer.phone|default:"--" }}</div>
+                            {% else %}
+                                <span class="text-slate-500 italic">Walk-in Customer</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3 text-right font-semibold font-mono text-emerald-400">₹{{ bill.net_total|floatformat:2 }}</td>
+                        <td class="p-3 text-right font-mono">₹{{ bill.amount_paid|floatformat:2 }}</td>
+                        <td class="p-3 text-right font-mono {% if bill.pending_amount > 0 %}text-red-400{% else %}text-slate-400{% endif %}">
+                            ₹{{ bill.pending_amount|floatformat:2 }}
+                        </td>
+                        <td class="p-3 text-right font-mono text-amber-500">₹{{ bill.final_balance|floatformat:2 }}</td>
+                        <td class="p-3 text-center flex justify-center space-x-2.5">
+                            <button onclick="viewBillDetails({{ bill.id }})" class="text-blue-400 hover:text-blue-300 font-semibold text-xs">
+                                View
+                            </button>
+                            <span class="text-slate-700">|</span>
+                            <button onclick="reprintBill({{ bill.id }})" class="text-emerald-400 hover:text-emerald-300 font-semibold text-xs">
+                                Print
+                            </button>
+                            <span class="text-slate-700">|</span>
+                            <a href="{% url 'duplicate_bill' bill.id %}" class="text-indigo-400 hover:text-indigo-300 font-semibold text-xs">
+                                Duplicate
+                            </a>
+                            <span class="text-slate-700">|</span>
+                            <a href="{% url 'delete_bill' bill.id %}" onclick="return confirm('Are you sure you want to delete this bill? This will delete the bill entries and cannot be undone.');" class="text-red-400 hover:text-red-300 font-semibold text-xs">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-8 text-center text-slate-400">No bills found in history. Start creating bills on the Billing Screen!</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if bills.has_other_pages %}
+        <div class="flex justify-between items-center bg-slate-900/60 p-4 border border-bordercolor rounded-xl">
+            <span class="text-xs text-slate-400">Showing page {{ bills.number }} of {{ bills.paginator.num_pages }}</span>
+            <div class="flex space-x-1">
+                {% if bills.has_previous %}
+                    <a href="?page={{ bills.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs transition">Previous</a>
+                {% endif %}
+                {% if bills.has_next %}
+                    <a href="?page={{ bills.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if start_date %}&start_date={{ start_date }}{% endif %}{% if end_date %}&end_date={{ end_date }}{% endif %}" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs transition">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Bill Details Modal -->
+<div id="details-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-cardbg border border-bordercolor rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[90vh]">
+        <h3 class="text-lg font-bold text-white mb-4 border-b border-bordercolor pb-2 flex justify-between items-center">
+            <span>Bill Inspection</span>
+            <span id="inspect-bill-number" class="text-blue-400 font-mono text-sm"></span>
+        </h3>
+        
+        <!-- Modal body: Details -->
+        <div class="flex-grow overflow-y-auto space-y-4">
+            
+            <div class="grid grid-cols-2 gap-4 text-sm bg-slate-950 p-3 rounded-lg border border-slate-900">
+                <div>
+                    <span class="text-slate-400 block text-xs">Customer Name</span>
+                    <span id="inspect-cust-name" class="font-medium text-slate-200"></span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-xs">Phone Number</span>
+                    <span id="inspect-cust-phone" class="font-mono text-slate-200"></span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-xs">Date</span>
+                    <span id="inspect-bill-date" class="font-mono text-slate-200"></span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-xs">Gross Total</span>
+                    <span id="inspect-gross-total" class="font-mono text-slate-200"></span>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Items Purchased</span>
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-900 border-b border-bordercolor text-slate-400 uppercase">
+                            <th class="p-2">Sr</th>
+                            <th class="p-2">Product</th>
+                            <th class="p-2 text-right">Qty</th>
+                            <th class="p-2 text-right">Rate</th>
+                            <th class="p-2 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inspect-items-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 pt-3 border-t border-slate-800 text-sm">
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-900 text-center">
+                    <span class="text-slate-400 block text-xs">Discount</span>
+                    <span id="inspect-discount" class="font-bold text-amber-500 font-mono"></span>
+                </div>
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-900 text-center">
+                    <span class="text-slate-400 block text-xs">Net Total</span>
+                    <span id="inspect-net-total" class="font-bold text-emerald-400 font-mono"></span>
+                </div>
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-900 text-center">
+                    <span class="text-slate-400 block text-xs">Amount Paid</span>
+                    <span id="inspect-amount-paid" class="font-bold text-blue-400 font-mono"></span>
+                </div>
+            </div>
+
+        </div>
+        
+        <div class="flex justify-end pt-4 border-t border-bordercolor mt-4">
+            <button type="button" onclick="closeDetailsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-5 py-2 rounded-lg text-sm">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function viewBillDetails(billId) {
+        fetch(`/billing/details/${billId}/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const bill = data.bill;
+                    document.getElementById('inspect-bill-number').textContent = bill.bill_number;
+                    document.getElementById('inspect-cust-name').textContent = bill.customer_name || 'Walk-in Customer';
+                    document.getElementById('inspect-cust-phone').textContent = bill.customer_phone || '--';
+                    document.getElementById('inspect-bill-date').textContent = bill.date;
+                    document.getElementById('inspect-gross-total').textContent = '₹' + parseFloat(bill.gross_total).toFixed(2);
+                    document.getElementById('inspect-discount').textContent = '₹' + parseFloat(bill.discount).toFixed(2);
+                    document.getElementById('inspect-net-total').textContent = '₹' + parseFloat(bill.net_total).toFixed(2);
+                    document.getElementById('inspect-amount-paid').textContent = '₹' + parseFloat(bill.amount_paid).toFixed(2);
+
+                    const itemsBody = document.getElementById('inspect-items-body');
+                    itemsBody.innerHTML = '';
+                    bill.items.forEach((item, idx) => {
+                        let tr = document.createElement('tr');
+                        tr.className = 'border-b border-gray-800';
+                        tr.innerHTML = `
+                            <td class="p-2 text-slate-400">${idx+1}</td>
+                            <td class="p-2 font-medium">${item.product_name}</td>
+                            <td class="p-2 text-right font-mono">${item.quantity}</td>
+                            <td class="p-2 text-right font-mono">₹${parseFloat(item.rate).toFixed(2)}</td>
+                            <td class="p-2 text-right font-mono font-semibold">₹${parseFloat(item.line_total).toFixed(2)}</td>
+                        `;
+                        itemsBody.appendChild(tr);
+                    });
+
+                    document.getElementById('details-modal').classList.remove('hidden');
+                } else {
+                    alert("Error loading details: " + data.message);
+                }
+            })
+            .catch(err => console.error("Inspect Error:", err));
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('details-modal').classList.add('hidden');
+    }
+
+    function reprintBill(billId) {
+        let printUrl = `/billing/print/${billId}/`;
+        let printWindow = window.open(printUrl, '_blank', 'width=800,height=600');
+        printWindow.onload = () => {
+            printWindow.print();
+        };
+    }
+</script>
+{% endblock %}

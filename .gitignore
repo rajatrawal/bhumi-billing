@@ -1,0 +1,118 @@
+```gitignore
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# ==========================
+# Django
+# ==========================
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media uploads (optional)
+media/
+
+# Static files collected by collectstatic
+staticfiles/
+
+# ==========================
+# Environment Variables
+# ==========================
+.env
+.env.*
+!.env.example
+
+# ==========================
+# IDEs
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Test & Coverage
+# ==========================
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.cache/
+
+# ==========================
+# Build / Distribution
+# ==========================
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ==========================
+# Jupyter
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# Type Checkers
+# ==========================
+.mypy_cache/
+.pyre/
+.pytype/
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+
+# ==========================
+# Celery
+# ==========================
+celerybeat-schedule
+celerybeat.pid
+
+# ==========================
+# Gunicorn
+# ==========================
+gunicorn.pid
+
+# ==========================
+# PyInstaller
+# ==========================
+*.manifest
+*.spec
+
+# ==========================
+# Secrets
+# ==========================
+*.pem
+*.key
+*.crt
+
+# ==========================
+# Backup Files
+# ==========================
+*.bak
+*.backup
+```

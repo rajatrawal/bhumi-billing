@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}⚡ Analytics Dashboard - FastBill{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white">Analytics Dashboard</h1>
+        <p class="text-sm text-slate-400">Real-time business performance, collections, and catalog performance metrics.</p>
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <!-- Today's Sales -->
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow-lg relative overflow-hidden">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Today's Sales</div>
+            <div class="text-2xl font-mono font-bold text-emerald-400 mt-1">₹{{ stats.today_sales|default:"0.00"|floatformat:2 }}</div>
+            <div class="text-[10px] text-slate-500 mt-2 font-semibold uppercase tracking-wider">{{ stats.today_bills }} Bills Completed</div>
+        </div>
+
+        <!-- Yesterday's Sales -->
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow-lg">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Yesterday's Sales</div>
+            <div class="text-2xl font-mono font-bold text-slate-200 mt-1">₹{{ stats.yesterday_sales|default:"0.00"|floatformat:2 }}</div>
+            <div class="text-[10px] text-slate-500 mt-2 font-semibold uppercase tracking-wider">{{ stats.yesterday_bills }} Bills Completed</div>
+        </div>
+
+        <!-- Month-to-Date Sales -->
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow-lg">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">This Month (MTD)</div>
+            <div class="text-2xl font-mono font-bold text-blue-400 mt-1">₹{{ stats.monthly_sales|default:"0.00"|floatformat:2 }}</div>
+            <div class="text-[10px] text-slate-500 mt-2 font-semibold uppercase tracking-wider">Current Calendar Month</div>
+        </div>
+
+        <!-- Outstanding Balances -->
+        <div class="bg-cardbg border border-bordercolor p-4 rounded-xl shadow-lg">
+            <div class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Customer Receivables</div>
+            <div class="text-2xl font-mono font-bold text-amber-500 mt-1">₹{{ stats.total_receivables|default:"0.00"|floatformat:2 }}</div>
+            <div class="text-[10px] text-slate-500 mt-2 font-semibold uppercase tracking-wider">Total Uncollected Balance</div>
+        </div>
+
+    </div>
+
+    <!-- Secondary KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-cardbg border border-bordercolor p-3.5 rounded-xl shadow">
+            <div class="text-xs text-slate-400 font-semibold uppercase">Total Bills</div>
+            <div class="text-lg font-bold text-slate-100 mt-1 font-mono">{{ stats.total_bills }}</div>
+        </div>
+        <div class="bg-cardbg border border-bordercolor p-3.5 rounded-xl shadow">
+            <div class="text-xs text-slate-400 font-semibold uppercase">Average Bill Value</div>
+            <div class="text-lg font-bold text-slate-100 mt-1 font-mono">₹{{ stats.avg_bill_value|default:"0.00"|floatformat:2 }}</div>
+        </div>
+        <div class="bg-cardbg border border-bordercolor p-3.5 rounded-xl shadow">
+            <div class="text-xs text-slate-400 font-semibold uppercase">Total Discounts Given</div>
+            <div class="text-lg font-bold text-slate-100 mt-1 font-mono">₹{{ stats.total_discounts|default:"0.00"|floatformat:2 }}</div>
+        </div>
+        <div class="bg-cardbg border border-bordercolor p-3.5 rounded-xl shadow">
+            <div class="text-xs text-slate-400 font-semibold uppercase">Cash Collected</div>
+            <div class="text-lg font-bold text-emerald-500 mt-1 font-mono">₹{{ stats.total_collected|default:"0.00"|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- Visualizations: Sales Trends & Product Performance -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Sales Trend Chart -->
+        <div class="col-span-12 lg:col-span-8 bg-cardbg border border-bordercolor p-5 rounded-xl shadow-lg flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Daily Revenue Trend</h3>
+                <p class="text-xs text-slate-500">Sales volume (INR) over the past 30 days.</p>
+            </div>
+            <div class="flex-grow flex items-center justify-center min-h-[250px]">
+                <canvas id="daily-sales-chart" class="w-full"></canvas>
+            </div>
+        </div>
+
+        <!-- Right: Top Products Chart -->
+        <div class="col-span-12 lg:col-span-4 bg-cardbg border border-bordercolor p-5 rounded-xl shadow-lg flex flex-col">
+            <div class="mb-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Top Selling Products</h3>
+                <p class="text-xs text-slate-500">Highest volume items by total units sold.</p>
+            </div>
+            <div class="flex-grow flex items-center justify-center min-h-[250px]">
+                <canvas id="top-products-chart" class="w-full"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Lists: Product Performance & Outstanding Customers -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Product Rankings -->
+        <div class="col-span-12 lg:col-span-6 bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-lg">
+            <div class="p-4 bg-slate-900 border-b border-bordercolor">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Catalog Performance</h3>
+            </div>
+            <div class="p-4 space-y-4">
+                
+                <!-- Top Products Table -->
+                <div class="space-y-1">
+                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Top Selling Items</span>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950 border-b border-bordercolor text-slate-400 font-semibold uppercase">
+                                <th class="p-2">Code</th>
+                                <th class="p-2">Product</th>
+                                <th class="p-2 text-right">Units Sold</th>
+                                <th class="p-2 text-right">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stats.top_products %}
+                                <tr class="border-b border-gray-800/40 hover:bg-slate-800/40">
+                                    <td class="p-2 font-mono font-semibold text-blue-400">{{ item.product__code }}</td>
+                                    <td class="p-2 font-medium text-slate-200">{{ item.product__name }}</td>
+                                    <td class="p-2 text-right font-mono font-bold">{{ item.total_qty|floatformat:0 }}</td>
+                                    <td class="p-2 text-right font-mono text-emerald-400">₹{{ item.total_rev|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-slate-500">No product sales data.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Least Sold Products Table -->
+                <div class="space-y-1 pt-2">
+                    <span class="text-xs font-semibold text-amber-500 uppercase tracking-wider block">Slow Moving / Least Sold</span>
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950 border-b border-bordercolor text-slate-400 font-semibold uppercase">
+                                <th class="p-2">Code</th>
+                                <th class="p-2">Product</th>
+                                <th class="p-2 text-right">Units Sold</th>
+                                <th class="p-2 text-right">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in stats.least_products %}
+                                <tr class="border-b border-gray-800/40 hover:bg-slate-800/40">
+                                    <td class="p-2 font-mono text-slate-400">{{ item.product__code }}</td>
+                                    <td class="p-2 text-slate-300">{{ item.product__name }}</td>
+                                    <td class="p-2 text-right font-mono">{{ item.total_qty|floatformat:0 }}</td>
+                                    <td class="p-2 text-right font-mono">₹{{ item.total_rev|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-slate-500">No product sales data.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Column: Customer Outstandings -->
+        <div class="col-span-12 lg:col-span-6 bg-cardbg border border-bordercolor rounded-xl overflow-hidden shadow-lg flex flex-col justify-between">
+            <div>
+                <div class="p-4 bg-slate-900 border-b border-bordercolor">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Customer Outstandings</h3>
+                </div>
+                <div class="p-4">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950 border-b border-bordercolor text-slate-400 font-semibold uppercase">
+                                <th class="p-2">Customer</th>
+                                <th class="p-2 font-mono">Phone</th>
+                                <th class="p-2 text-right">Outstanding Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cust in stats.top_debtors %}
+                                <tr class="border-b border-gray-800/40 hover:bg-slate-800/40">
+                                    <td class="p-2 font-medium text-slate-200">{{ cust.name|default:"Unnamed" }}</td>
+                                    <td class="p-2 font-mono text-slate-400">{{ cust.phone|default:"--" }}</td>
+                                    <td class="p-2 text-right font-mono font-bold text-amber-500">₹{{ cust.balance|floatformat:2 }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="p-4 text-center text-slate-500">No customer outstanding balances.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-slate-900/40 border-t border-bordercolor text-xs text-slate-500 italic">
+                Note: Outstanding balances reflect total accumulated unpaid customer balances.
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/chart.min.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Render 30-day Daily Sales Line Chart
+        const dailyCtx = document.getElementById('daily-sales-chart');
+        const dailyLabels = [{% for day in stats.daily_trend %}"{{ day.date|date:'d M' }}",{% endfor %}];
+        const dailyData = [{% for day in stats.daily_trend %}{{ day.revenue }},{% endfor %}];
+        
+        new Chart(dailyCtx, {
+            type: 'line',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Daily Revenue',
+                    data: dailyData
+                }]
+            }
+        });
+
+        // Render Top Products Bar Chart
+        const prodCtx = document.getElementById('top-products-chart');
+        const prodLabels = [{% for p in stats.top_products|slice:":5" %}"{{ p.product__name|slice:':10' }}",{% endfor %}];
+        const prodData = [{% for p in stats.top_products|slice:":5" %}{{ p.total_qty }},{% endfor %}];
+        
+        new Chart(prodCtx, {
+            type: 'bar',
+            data: {
+                labels: prodLabels,
+                datasets: [{
+                    label: 'Units Sold',
+                    data: prodData
+                }]
+            }
+        });
+    });
+</script>
+{% endblock %}

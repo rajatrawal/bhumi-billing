@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}⚡ Store Settings - FastBill{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white">Store Configurations</h1>
+        <p class="text-sm text-slate-400">Manage company information, invoice preferences, print parameters, and receipt layout details.</p>
+    </div>
+
+    <!-- Settings Form -->
+    <div class="bg-cardbg border border-bordercolor rounded-xl shadow-lg overflow-hidden">
+        <div class="p-4 bg-slate-900 border-b border-bordercolor">
+            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300">Invoice & Receipt Settings</h3>
+        </div>
+
+        <form method="post" action="{% url 'settings' %}" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            <!-- Company Name -->
+            <div class="space-y-1">
+                <label for="company_name" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Company / Store Name *</label>
+                <input type="text" name="company_name" id="company_name" value="{{ settings.company_name }}" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-semibold">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Phone -->
+                <div class="space-y-1">
+                    <label for="phone" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Store Phone *</label>
+                    <input type="text" name="phone" id="phone" value="{{ settings.phone }}" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-mono">
+                </div>
+                <!-- GST Number -->
+                <div class="space-y-1">
+                    <label for="gst_number" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">GST IN / Tax Code</label>
+                    <input type="text" name="gst_number" id="gst_number" value="{{ settings.gst_number }}" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-mono">
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="space-y-1">
+                <label for="address" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Store Address *</label>
+                <textarea name="address" id="address" rows="3" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">{{ settings.address }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Bill Prefix -->
+                <div class="space-y-1">
+                    <label for="bill_prefix" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Bill Invoice Prefix *</label>
+                    <input type="text" name="bill_prefix" id="bill_prefix" value="{{ settings.bill_prefix }}" required class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500 font-mono">
+                </div>
+                <!-- Default Discount -->
+                <div class="space-y-1">
+                    <label for="default_discount" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Default Flat Discount (₹)</label>
+                    <input type="number" step="any" name="default_discount" id="default_discount" value="{{ settings.default_discount }}" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm text-right font-mono focus:border-blue-500">
+                </div>
+                <!-- UPI ID -->
+                <div class="space-y-1">
+                    <label for="upi_id" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">UPI ID (For Print QR Code)</label>
+                    <input type="text" name="upi_id" id="upi_id" value="{{ settings.upi_id }}" placeholder="e.g. storename@okaxis" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm font-mono focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Footer Text -->
+            <div class="space-y-1">
+                <label for="footer_text" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Receipt Footer Message</label>
+                <input type="text" name="footer_text" id="footer_text" value="{{ settings.footer_text }}" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">
+            </div>
+
+            <!-- Terms and conditions -->
+            <div class="space-y-1">
+                <label for="terms" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Terms & Conditions</label>
+                <textarea name="terms" id="terms" rows="2" class="w-full bg-slate-950 border border-bordercolor text-white px-3 py-2 rounded-lg text-sm focus:border-blue-500">{{ settings.terms }}</textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end pt-4 border-t border-bordercolor">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded-lg text-sm transition shadow-md">
+                    Save Configurations
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

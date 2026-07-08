@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}⚡ FastBill - Ultra Fast Billing System{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                        accent: '#3b82f6',
+                        accentHover: '#2563eb',
+                        bordercolor: '#334155',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-darkbg text-slate-100 font-sans min-h-screen flex flex-col no-print">
+
+    <!-- Header / Navbar -->
+    <header class="bg-cardbg border-b border-bordercolor py-3 px-6 flex justify-between items-center shadow-md">
+        <div class="flex items-center space-x-4">
+            <span class="text-xl font-bold tracking-tight text-blue-400 flex items-center">
+                <span class="mr-2">⚡</span>Bhumi Billing
+            </span>
+            <span class="text-xs bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full font-mono uppercase tracking-wider">v1.0.0</span>
+        </div>
+        
+        <!-- Navigation Links -->
+        <nav class="flex items-center space-x-1 md:space-x-2">
+            <a href="{% url 'billing_screen' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-150 {% if request.resolver_match.url_name == 'billing_screen' %}bg-blue-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                Billing Screen <span class="ml-1 text-[10px] bg-slate-900 px-1 py-0.5 rounded text-blue-300 font-mono">F1</span>
+            </a>
+            <a href="{% url 'billing_history' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-150 {% if request.resolver_match.url_name == 'billing_history' %}bg-blue-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                History
+            </a>
+            <a href="{% url 'product_list' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-150 {% if request.resolver_match.url_name == 'product_list' %}bg-blue-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                Products
+            </a>
+            <a href="{% url 'dashboard' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-150 {% if request.resolver_match.url_name == 'dashboard' %}bg-blue-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                Dashboard
+            </a>
+            <a href="{% url 'settings' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition duration-150 {% if request.resolver_match.url_name == 'settings' %}bg-blue-600 text-white shadow-lg{% else %}text-slate-400 hover:bg-slate-800 hover:text-white{% endif %}">
+                Settings
+            </a>
+        </nav>
+
+        <div class="flex items-center space-x-3 text-xs text-slate-400 font-mono">
+            <div class="bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                <span>Save: <kbd class="bg-slate-950 px-1 rounded text-white font-bold">Ctrl+S</kbd></span>
+                <span class="mx-1">|</span>
+                <span>Print: <kbd class="bg-slate-950 px-1 rounded text-white font-bold">Ctrl+P</kbd></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow p-4 md:p-6 max-w-8xl mx-auto w-full flex flex-col">
+        {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <div class="p-3 rounded-lg text-sm font-medium border {% if message.tags == 'success' %}bg-emerald-950/40 text-emerald-400 border-emerald-800{% elif message.tags == 'error' %}bg-red-950/40 text-red-400 border-red-800{% else %}bg-blue-950/40 text-blue-400 border-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Keyboard Shortcuts Navigation Script -->
+    <script>
+        document.addEventListener('keydown', (e) => {
+            // F1 to Billing Screen
+            if (e.key === 'F1') {
+                e.preventDefault();
+                window.location.href = "{% url 'billing_screen' %}";
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
