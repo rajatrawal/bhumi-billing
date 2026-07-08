@@ -78,7 +78,10 @@ WSGI_APPLICATION = 'billing_project.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    "default": "postgresql://postgres:2TAfjtifyCn9nwHT@db.lcdoxyolcshphomcxhmb.supabase.co:5432/postgres"
+    "default": dj_database_url.config(
+        default=os.getenv("postgresql://postgres:2TAfjtifyCn9nwHT@db.lcdoxyolcshphomcxhmb.supabase.co:5432/postgres"),
+        conn_max_age=600,
+    )
     
 }
 
