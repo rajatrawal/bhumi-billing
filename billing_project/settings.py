@@ -77,12 +77,12 @@ WSGI_APPLICATION = 'billing_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default="postgresql://postgres.lcdoxyolcshphomcxhmb:2TAfjtifyCn9nwHT@aws-1-ap-south-1.pooler.supabase.com:5432/postgres",
-        conn_max_age=600,
-    )
-    
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
