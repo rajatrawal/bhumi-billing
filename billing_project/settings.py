@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'billing_project.wsgi.application'
 
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv("postgresql://postgres:2TAfjtifyCn9nwHT@db.lcdoxyolcshphomcxhmb.supabase.co:5432/postgres"),
+        default="postgresql://postgres:2TAfjtifyCn9nwHT@db.lcdoxyolcshphomcxhmb.supabase.co:5432/postgres",
         conn_max_age=600,
     )
     
