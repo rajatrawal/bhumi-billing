@@ -78,9 +78,8 @@ WSGI_APPLICATION = 'billing_project.wsgi.application'
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
-    )
+    "default": "postgresql://postgres:2TAfjtifyCn9nwHT@db.lcdoxyolcshphomcxhmb.supabase.co:5432/postgres"
+    
 }
 
 
